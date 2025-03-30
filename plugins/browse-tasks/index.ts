@@ -15,7 +15,10 @@ export class BrowseTasksPlugin implements Plugin {
     private panel?: vscode.WebviewPanel;
 
     activate(context: vscode.ExtensionContext) {
-        this.panel = createTaskBrowserPanel(context);
+        if (!this.panel) {
+            this.panel = createTaskBrowserPanel(context);
+        }
+        this.panel.reveal(vscode.ViewColumn.One);
     }
 
     deactivate() {
