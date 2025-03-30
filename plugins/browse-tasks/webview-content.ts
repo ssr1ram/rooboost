@@ -101,9 +101,10 @@ export function getWebviewContent(): string {
         
         if (message.command === 'showTasks') {
             console.log('Processing showTasks command with ' + (message.tasks ? message.tasks.length : 0) + ' tasks');
+            const options = { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' };
             if (Array.isArray(message.tasks) && message.tasks.length > 0) {
                 const tasksHtml = message.tasks.map(task => 
-                    '<li class="task-item">' + task.name + ' ' + task.projectName + ' ' + task.message + '</li>'
+                    '<li class="task-item">' + new Date(task.timestamp).toLocaleDateString("en-US", options) + ' ' + task.name + ' ' + task.projectName + ' ' + task.message + '</li>'
                 ).join('');
                 taskList.innerHTML = '<ul class="task-list">' + tasksHtml + '</ul>';
                 console.log('Tasks rendered to UI');

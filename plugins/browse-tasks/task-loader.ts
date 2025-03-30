@@ -8,6 +8,7 @@ interface Task {
     path: string;
     message: string;
     projectName: string;
+    timestamp: number;
 }
 
 export async function loadTasks(panel: vscode.WebviewPanel) {
@@ -65,13 +66,16 @@ export async function loadTasks(panel: vscode.WebviewPanel) {
                     outputChannel.appendLine(`Error reading task files for ${dirent.name}: ${err}`);
                 }
                 outputChannel.appendLine(`Project: ${projectName}, Message: ${messageText}`);
+                const stats = fs.statSync(taskPath);
                 return {
                     name: dirent.name.substring(0, 8), // Shorten task ID
                     path: taskPath,
                     message: messageText,
-                    projectName: projectName
+                    projectName: projectName,
+                    timestamp: stats.mtimeMs
                 };
-            });
+            })
+            .sort((a, b) => b.timestamp - a.timestamp); // Reverse chronological sort
 
         outputChannel.appendLine('Final task objects: ' + JSON.stringify(taskDirs, null, 2));
         outputChannel.show();
