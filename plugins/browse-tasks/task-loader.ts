@@ -7,10 +7,12 @@ interface Task {
     name: string;
     path: string;
     message: string;
+    projectName: string;
 }
 
 export async function loadTasks(panel: vscode.WebviewPanel) {
     const tasksDir = getTasksDirectory();
+    const outputChannel = vscode.window.createOutputChannel('RooBoost Tasks');
     
     try {
         if (!fs.existsSync(tasksDir)) {
@@ -24,6 +26,7 @@ export async function loadTasks(panel: vscode.WebviewPanel) {
             .map(dirent => {
                 const taskPath = path.join(tasksDir, dirent.name);
                 let messageText = 'No message available';
+                let projectName = 'Unknown project';
                 
                 try {
                     const messagesPath = path.join(taskPath, 'ui_messages.json');
@@ -36,16 +39,42 @@ export async function loadTasks(panel: vscode.WebviewPanel) {
                             }
                         }
                     }
-                } catch (err) {
-                    console.error(`Error reading ui_messages for ${dirent.name}:`, err);
-                }
 
+                    const historyPath = path.join(taskPath, 'api_conversation_history.json');
+                    if (fs.existsSync(historyPath)) {
+                        outputChannel.appendLine(`Found history file for ${dirent.name}`);
+                        const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+                        if (history[0]?.content?.[1]?.text) {
+                            outputChannel.appendLine(`Found content text for ${dirent.name}`);
+                            const pathMatch = history[0].content[1].text.match(/Current Working Directory \((.*)\)/);
+                            if (pathMatch && pathMatch[1]) {
+                                outputChannel.appendLine(`Found path match for ${dirent.name}: ${pathMatch[1]}`);
+                                const pathParts = pathMatch[1].split('/');
+                                projectName = pathParts[pathParts.length - 1];
+                                outputChannel.appendLine(`Extracted project name for ${dirent.name}: ${projectName}`);
+                            } else {
+                                outputChannel.appendLine(`No path match found in text for ${dirent.name}`);
+                            }
+                        } else {
+                            outputChannel.appendLine(`No content text found for ${dirent.name}`);
+                        }
+                    } else {
+                        outputChannel.appendLine(`No history file found for ${dirent.name}`);
+                    }
+                } catch (err) {
+                    outputChannel.appendLine(`Error reading task files for ${dirent.name}: ${err}`);
+                }
+                outputChannel.appendLine(`Project: ${projectName}, Message: ${messageText}`);
                 return {
-                    name: dirent.name,
+                    name: dirent.name.substring(0, 8), // Shorten task ID
                     path: taskPath,
-                    message: messageText
+                    message: messageText,
+                    projectName: projectName
                 };
             });
+
+        outputChannel.appendLine('Final task objects: ' + JSON.stringify(taskDirs, null, 2));
+        outputChannel.show();
 
         const message = {
             command: 'showTasks',

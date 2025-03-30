@@ -103,7 +103,7 @@ export function getWebviewContent(): string {
             console.log('Processing showTasks command with ' + (message.tasks ? message.tasks.length : 0) + ' tasks');
             if (Array.isArray(message.tasks) && message.tasks.length > 0) {
                 const tasksHtml = message.tasks.map(task => 
-                    '<li class="task-item">' + task.name + '</li>'
+                    '<li class="task-item">' + task.name + ' ' + task.projectName + ' ' + task.message + '</li>'
                 ).join('');
                 taskList.innerHTML = '<ul class="task-list">' + tasksHtml + '</ul>';
                 console.log('Tasks rendered to UI');
