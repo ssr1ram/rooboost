@@ -17,7 +17,10 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext): vscode
         vscode.ViewColumn.One,
         {
             enableScripts: true,
-            retainContextWhenHidden: true
+            retainContextWhenHidden: true,
+            localResourceRoots: [
+                vscode.Uri.file(path.join(context.extensionPath, 'plugins', 'browse-tasks'))
+            ]
         }
     );
 

@@ -11,5 +11,5 @@ export interface Plugin {
 export interface Command {
     commandId: string;
     title: string;
-    handler: (context: vscode.ExtensionContext) => void;
+    handler: (context: vscode.ExtensionContext, ...args: any[]) => void;
 }
