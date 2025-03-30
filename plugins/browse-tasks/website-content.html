@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RooBoost Task Browser</title>
+    <style>
+        :root {
+            --primary-color: #0078d4;
+            --border-color: #ddd;
+            --hover-bg: #f5f5f5;
+            --header-bg: #f8f8f8;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Topbar styles */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .logo {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--primary-color);
+        }
+        
+        .action-select {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Page heading */
+        .page-heading {
+            padding: 15px 20px;
+            font-size: 1.5em;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Main content area */
+        .content-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            background-color: #f3f3f3;
+            border-right: 1px solid var(--border-color);
+            padding: 10px;
+        }
+        
+        /* Main content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        /* Table styles */
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .task-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background-color: var(--header-bg);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .task-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td .small {
+            font-size: .8em;
+        }
+        
+        .task-table tr:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .action-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .action-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Debug info */
+        .debug {
+            color: #666;
+            font-size: 0.8em;
+            margin-top: 20px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+        
+        /* Loading state */
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo">RooBoost</div>
+        <select class="action-select" id="actionSelect">
+            <option value="browseTasks" selected>Browse Tasks</option>
+        </select>
+    </div>
+    
+    <div class="page-heading">Browse Tasks</div>
+    
+    <div class="content-area">
+        <div class="sidebar">
+            <!-- Sidebar content will go here -->
+        </div>
+        
+        <div class="main-content">
+            <div id="taskList" class="loading">Loading tasks...</div>
+            <div id="debugInfo" class="debug"></div>
+        </div>
+    </div>
+    
+    <script>
+        console.log('Webview script initializing at ' + new Date().toISOString());
+        const vscode = acquireVsCodeApi();
+        console.log('VS Code API acquired successfully');
+        
+        function loadTasks() {
+            console.log('loadTasks called at ' + new Date().toISOString());
+            document.getElementById('taskList').innerHTML = '<span class="loading">Loading tasks...</span>';
+            vscode.postMessage({ command: 'loadTasks' });
+        }
+        
+        function createViewLink(taskId) {
+            return '<a class="action-link" onclick="viewTaskDetails(\'' + taskId + '\')">View</a>';
+        }
+        
+        function viewTaskDetails(taskId) {
+            vscode.postMessage({ 
+                command: 'viewTask', 
+                taskId: taskId 
+            });
+        }
+        
+        console.log('Setting up message listener...');
+        window.addEventListener('message', event => {
+            console.log('Message received at ' + new Date().toISOString() + ':', event.data);
+            const taskList = document.getElementById('taskList');
+            const debugInfo = document.getElementById('debugInfo');
+            console.log('taskList element:', taskList ? 'found' : 'null');
+            
+            let message;
+            try {
+                message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+                console.log('Parsed message:', message);
+            } catch (e) {
+                console.log('Failed to parse message:', e);
+                return;
+            }
+            
+            console.log('Command check:', message.command);
+            
+            if (message.command === 'showTasks') {
+                console.log('Processing showTasks command with ' + (message.tasks ? message.tasks.length : 0) + ' tasks');
+                
+                if (Array.isArray(message.tasks) && message.tasks.length > 0) {
+                    const options = { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    };
+                    
+                    const tableHtml = `
+                        <table class="task-table">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Task</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${message.tasks.map(task => `
+                                    <tr>
+                                        <td>${task.projectName || '-'}
+                                            <br>
+                                            <span class="small">${new Date(task.timestamp).toLocaleDateString("en-US", options)}</span>
+                                            </td>
+                                        <td>${task.message || '-'}</td>
+                                        <td>${createViewLink(task.id)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    taskList.innerHTML = tableHtml;
+                    console.log('Tasks rendered to UI');
+                } else {
+                    taskList.innerHTML = '<p>No tasks found</p>';
+                    console.log('No tasks to render');
+                }
+            } else {
+                console.log('Unknown command received');
+            }
+            
+            if (debugInfo && message.debug) {
+                debugInfo.innerHTML = 'Debug: ' + message.debug;
+            }
+        });
+        
+        // Set up action select change handler
+        document.getElementById('actionSelect').addEventListener('change', (event) => {
+            const selectedAction = event.target.value;
+            if (selectedAction === 'browseTasks') {
+                loadTasks();
+            }
+        });
+        
+        console.log('Script setup complete');
+        loadTasks();
+    </script>
+</body>
+</html>

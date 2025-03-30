@@ -27,13 +27,15 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "package": "vsce package"
+    "compile": "tsc -p ./ && npm run copy:html",
+    "watch": "tsc -watch -p ./ & npm run copy:html",
+    "package": "vsce package",
+    "copy:html": "cpx \"plugins/browse-tasks/website-content.html\" out/plugins/browse-tasks/"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.75.0",
+    "cpx": "^1.5.0",
     "typescript": "^5.0.0",
     "vsce": "^2.15.0"
   }
