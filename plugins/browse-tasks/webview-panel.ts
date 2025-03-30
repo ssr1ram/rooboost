@@ -24,7 +24,18 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext): vscode
         }
     );
 
-    panel.webview.html = getWebviewContent();
+    const webviewContent = getWebviewContent();
+    console.log('Webview content length:', webviewContent.length);
+    panel.webview.html = webviewContent;
+    
+    // Log webview configuration
+    console.log('Webview options:', {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [
+            vscode.Uri.file(path.join(context.extensionPath, 'plugins', 'browse-tasks'))
+        ]
+    });
     
     panel.webview.onDidReceiveMessage(
         async (message: { command: string }) => {

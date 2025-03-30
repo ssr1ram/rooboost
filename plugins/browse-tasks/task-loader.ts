@@ -47,11 +47,12 @@ export async function loadTasks(panel: vscode.WebviewPanel) {
                 };
             });
 
-        panel.webview.postMessage({
+        const message = {
             command: 'showTasks',
             tasks: taskDirs,
             debug: `Successfully loaded ${taskDirs.length} tasks from ${tasksDir}`
-        });
+        };
+        panel.webview.postMessage(JSON.stringify(message));
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         panel.webview.postMessage({

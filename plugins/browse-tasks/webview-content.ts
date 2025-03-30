@@ -72,7 +72,10 @@ export function getWebviewContent(): string {
     </div>
 
     <script>
-        const vscode = acquireVsCodeApi();
+        console.log('Webview script initializing...');
+        try {
+            const vscode = acquireVsCodeApi();
+            console.log('VS Code API acquired successfully');
         
         function escapeHtml(unsafe) {
             return unsafe
@@ -91,46 +94,128 @@ export function getWebviewContent(): string {
             });
         }
 
+        function safeStringify(obj) {
+            try {
+                return JSON.stringify(obj);
+            } catch {
+                return '{}';
+            }
+        }
+
+        console.log('Setting up message listener...');
         window.addEventListener('message', event => {
-            const message = event.data;
+            console.log('Message event received:', event);
             const debugInfo = document.getElementById('debugInfo');
             
-            switch (message.command) {
-                case 'showTasks':
-                    const tasksList = document.getElementById('taskList');
-                    if (tasksList) {
-                        if (message.tasks && message.tasks.length > 0) {
-                            const tasksHtml = message.tasks.map(task => {
-                                const taskId = task.name;
-                                const shortId = taskId.length > 8 ?
-                                    taskId.substring(0,4) + '...' + taskId.substring(taskId.length-4) :
-                                    taskId;
+            try {
+                if (!event || !event.data) {
+                    if (debugInfo) {
+                        debugInfo.innerHTML += '<div class="error">No event data received</div>';
+                    }
+                    return;
+                }
+                
+                // Safely parse message
+                let message;
+                try {
+                    message = typeof event.data === 'string' ?
+                        JSON.parse(event.data) : event.data;
+                } catch (parseError) {
+                    console.error('Error parsing message:', parseError);
+                    if (debugInfo) {
+                        debugInfo.innerHTML += '<div class="error">Invalid message format: ' +
+                            escapeHtml(parseError.message) + '</div>';
+                    }
+                    return;
+                }
+                
+                if (!message || !message.command) {
+                    if (debugInfo) {
+                        debugInfo.innerHTML += '<div class="error">Message missing command</div>';
+                    }
+                    return;
+                }
+
+                // Log raw message to debug panel
+                if (debugInfo) {
+                    debugInfo.innerHTML += '<div class="debug-message">' +
+                        escapeHtml(safeStringify(message)) + '</div>';
+                }
+
+                switch (message.command) {
+                    case 'showTasks':
+                        const tasksList = document.getElementById('taskList');
+                        if (tasksList) {
+                            if (Array.isArray(message.tasks) && message.tasks.length > 0) {
+                                // Validate tasks array
+                                if (!Array.isArray(message.tasks)) {
+                                    throw new Error('Tasks is not an array');
+                                }
+
+                                // Generate safe HTML with validation
+                                const tasksHtml = message.tasks.map(task => {
+                                    try {
+                                        if (!task || typeof task !== 'object') {
+                                            console.warn('Invalid task object:', task);
+                                            return '';
+                                        }
+                                        
+                                        // Validate required fields
+                                        const taskId = typeof task.name === 'string' ? task.name : '';
+                                        const taskMessage = typeof task.message === 'string' ? task.message : '';
+                                        
+                                        const shortId = taskId.length > 8 ?
+                                            taskId.substring(0,4) + '...' + taskId.substring(taskId.length-4) :
+                                            taskId;
+                                        
+                                        const safeHtml = '<li class="task-item">' +
+                                            '<div class="task-id">' + escapeHtml(shortId) + '</div>' +
+                                            '<div class="task-message">' + escapeHtml(taskMessage) + '</div>' +
+                                            '</li>';
+                                            
+                                        console.log('Generated task HTML:', safeHtml);
+                                        return safeHtml;
+                                    } catch (error) {
+                                        console.error('Error generating task HTML:', error, task);
+                                        return '';
+                                    }
+                                }).join('');
                                 
-                                return '<li class="task-item">' +
-                                    '<div class="task-id">' + escapeHtml(shortId) + '</div>' +
-                                    '<div class="task-message">' + escapeHtml(task.message) + '</div>' +
-                                    '</li>';
-                            }).join('');
-                            
-                            tasksList.innerHTML = '<ul class="task-list">' + tasksHtml + '</ul>';
-                        } else {
-                            tasksList.innerHTML = '<p>No tasks found</p>';
+                                // Validate final HTML before injection
+                                try {
+                                    const fullHtml = '<ul class="task-list">' + tasksHtml + '</ul>';
+                                    console.log('Full tasks HTML:', fullHtml);
+                                    tasksList.innerHTML = fullHtml;
+                                } catch (error) {
+                                    console.error('Error setting tasks HTML:', error);
+                                    tasksList.innerHTML = '<p class="error">Error displaying tasks</p>';
+                                }
+                            } else {
+                                tasksList.innerHTML = '<p>No tasks found</p>';
+                            }
                         }
-                    }
-                    if (debugInfo && message.debug) {
-                        debugInfo.innerHTML += '<div>' + message.debug + '</div>';
-                    }
-                    break;
-                case 'showError':
-                    const errorTaskList = document.getElementById('taskList');
-                    if (errorTaskList && message.message) {
-                        errorTaskList.innerHTML =
-                            '<p class="error">' + message.message + '</p>';
-                    }
-                    if (debugInfo && message.debug) {
-                        debugInfo.innerHTML += '<div>' + message.debug + '</div>';
-                    }
-                    break;
+                        if (debugInfo && message.debug) {
+                            debugInfo.innerHTML += '<div>' + escapeHtml(message.debug) + '</div>';
+                        }
+                        break;
+                    case 'showError':
+                        const errorTaskList = document.getElementById('taskList');
+                        if (errorTaskList) {
+                            errorTaskList.innerHTML = message.message ?
+                                '<p class="error">' + escapeHtml(message.message) + '</p>' :
+                                '<p class="error">An unknown error occurred</p>';
+                        }
+                        if (debugInfo && message.debug) {
+                            debugInfo.innerHTML += '<div>' + escapeHtml(message.debug) + '</div>';
+                        }
+                        break;
+                }
+            } catch (error) {
+                console.error('Error processing message:', error);
+                const errorTaskList = document.getElementById('taskList');
+                if (errorTaskList) {
+                    errorTaskList.innerHTML = '<p class="error">Error displaying content</p>';
+                }
             }
         });
 
