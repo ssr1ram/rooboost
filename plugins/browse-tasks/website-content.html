@@ -169,6 +169,38 @@
             background-color: var(--primary-color);
             color: white;
         }
+        
+        /* Bulk actions styling */
+        .bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: var(--header-bg);
+            border-radius: 4px;
+        }
+        
+        .bulk-actions select {
+            padding: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .bulk-actions button {
+            padding: 5px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .bulk-actions button:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        #deleteSelectedBtn {
+            color: #d33;
+        }
     </style>
 </head>
 <body>
@@ -200,6 +232,23 @@
                     <option value="all">All Projects</option>
                 </select>
             </div>
+            
+            <!-- Action bar for bulk operations -->
+            <div class="action-bar" style="margin-bottom: 15px; padding: 10px; background-color: var(--header-bg); border-radius: 4px;">
+                <input type="checkbox" id="selectAllCheckbox" style="margin-right: 10px;">
+                <label for="selectAllCheckbox" style="margin-right: 20px;">Select All</label>
+                
+                <select id="moveToSource" style="margin-right: 10px; padding: 5px;">
+                    <option value="">Move selected to...</option>
+                    <option value="rooveterinaryinc.roo-cline">rooveterinaryinc.roo-cline</option>
+                    <option value="saoudrizwan.claude-dev">saoudrizwan.claude-dev</option>
+                    <option value="rooboost">rooboost</option>
+                </select>
+                
+                <button id="moveSelectedBtn" style="margin-right: 10px; padding: 5px 10px;">Move</button>
+                <button id="deleteSelectedBtn" style="padding: 5px 10px; color: #d33;">Delete</button>
+            </div>
+            
             <div id="taskList" class="loading">Loading tasks...</div>
             <div id="debugInfo" class="debug"></div>
         </div>
@@ -288,6 +337,7 @@
                 <table class="task-table">
                     <thead>
                         <tr>
+                            <th style="width: 20px;"><input type="checkbox" id="headerCheckbox"></th>
                             <th>Project</th>
                             <th>Task</th>
                             <th>Actions</th>
@@ -296,6 +346,7 @@
                     <tbody>
                         ${tasks.map(task => `
                             <tr>
+                                <td><input type="checkbox" class="task-checkbox" data-task-path="${task.path}"></td>
                                 <td>${task.projectName || '-'}
                                     <br>
                                     <span class="small">${new Date(task.timestamp).toLocaleDateString("en-US", options)}</span>
@@ -381,6 +432,142 @@
         projectFilter.addEventListener('change', () => {
             const filteredTasks = filterTasks(allTasks, projectFilter.value);
             document.getElementById('taskList').innerHTML = renderTasks(filteredTasks);
+        });
+
+        // Bulk selection functionality
+        function setupBulkSelection() {
+            console.log('Setting up bulk selection...');
+            const actionBar = document.querySelector('.action-bar');
+            const headerCheckbox = document.getElementById('headerCheckbox');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const moveToSource = document.getElementById('moveToSource');
+            const moveSelectedBtn = document.getElementById('moveSelectedBtn');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+            console.log('Action bar:', actionBar);
+            console.log('Header checkbox:', headerCheckbox);
+            console.log('Select All checkbox:', selectAllCheckbox);
+            console.log('Move select:', moveToSource);
+            console.log('Move button:', moveSelectedBtn);
+            console.log('Delete button:', deleteSelectedBtn);
+
+            if (!actionBar) console.error('Action bar not found!');
+            if (!headerCheckbox) console.error('Header checkbox not found!');
+            if (!selectAllCheckbox) console.error('Select All checkbox not found!');
+            if (!moveToSource) console.error('Move select not found!');
+            if (!moveSelectedBtn) console.error('Move button not found!');
+            if (!deleteSelectedBtn) console.error('Delete button not found!');
+
+            if (!actionBar || !headerCheckbox || !selectAllCheckbox || !moveToSource || !moveSelectedBtn || !deleteSelectedBtn) {
+                console.error('Bulk selection elements not found - will retry');
+                // Retry after brief delay
+                setTimeout(setupBulkSelection, 100);
+                return;
+            }
+
+            // Initialize visibility
+            actionBar.style.display = 'none';
+            
+            // Add CSS class for better styling control
+            actionBar.classList.add('bulk-actions');
+
+            function updateActionBarVisibility() {
+                const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
+                actionBar.style.display = checkedBoxes.length > 0 ? 'block' : 'none';
+            }
+
+            function getSelectedTaskPaths() {
+                const checkboxes = document.querySelectorAll('.task-checkbox:checked');
+                return Array.from(checkboxes).map(checkbox => checkbox.dataset.taskPath);
+            }
+
+            // Task checkbox change handler
+            document.addEventListener('change', (e) => {
+                if (e.target.classList.contains('task-checkbox')) {
+                    updateActionBarVisibility();
+                    // Update header checkbox state
+                    const allChecked = document.querySelectorAll('.task-checkbox').length ===
+                                     document.querySelectorAll('.task-checkbox:checked').length;
+                    headerCheckbox.checked = allChecked;
+                    selectAllCheckbox.checked = allChecked;
+                }
+            });
+
+            // Header checkbox click handler
+            headerCheckbox.addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('.task-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+                updateActionBarVisibility();
+                selectAllCheckbox.checked = e.target.checked;
+            });
+
+            // Select All checkbox handler
+            selectAllCheckbox.addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('.task-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+                headerCheckbox.checked = e.target.checked;
+                updateActionBarVisibility();
+            });
+
+            // Move selected button handler
+            moveSelectedBtn.addEventListener('click', () => {
+                const selectedPaths = getSelectedTaskPaths();
+                const targetSource = moveToSource.value;
+                
+                if (selectedPaths.length === 0) {
+                    vscode.postMessage({
+                        command: 'showError',
+                        message: 'No tasks selected'
+                    });
+                    return;
+                }
+
+                if (!targetSource) {
+                    vscode.postMessage({
+                        command: 'showError',
+                        message: 'Please select a destination source'
+                    });
+                    return;
+                }
+
+                vscode.postMessage({
+                    command: 'moveTasks',
+                    taskPaths: selectedPaths,
+                    targetSource: targetSource
+                });
+            });
+
+            // Delete selected button handler
+            deleteSelectedBtn.addEventListener('click', () => {
+                const selectedPaths = getSelectedTaskPaths();
+                
+                if (selectedPaths.length === 0) {
+                    vscode.postMessage({
+                        command: 'showError',
+                        message: 'No tasks selected'
+                    });
+                    return;
+                }
+
+                if (confirm(`Are you sure you want to delete ${selectedPaths.length} selected task(s)?`)) {
+                    vscode.postMessage({
+                        command: 'deleteTasks',
+                        taskPaths: selectedPaths
+                    });
+                }
+            });
+
+            // Initial setup
+            actionBar.style.display = 'none';
+        }
+
+        // Call setup after initial render
+        window.addEventListener('load', () => {
+            setupBulkSelection();
         });
 
         console.log('Script setup complete');
