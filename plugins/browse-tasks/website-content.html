@@ -82,7 +82,9 @@
         .main-content {
             flex: 1;
             padding: 20px;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         
         /* Table styles */
@@ -226,31 +228,36 @@
         </div>
         
         <div class="main-content">
-            <div class="filter-controls">
-                <label for="projectFilter">Filter by project:</label>
-                <select id="projectFilter" class="filter-select">
-                    <option value="all">All Projects</option>
-                </select>
+            <!-- Action bar with bulk operations and filter controls -->
+            <div class="action-bar bulk-actions" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background-color: var(--header-bg); border-radius: 4px;">
+                <div>
+                    <input type="checkbox" id="selectAllCheckbox" style="margin-right: 10px;">
+                    <label for="selectAllCheckbox" style="margin-right: 20px;">Select All</label>
+                    
+                    <select id="moveToSource" style="margin-right: 10px; padding: 5px;">
+                        <option value="">Move selected to...</option>
+                        <option value="rooveterinaryinc.roo-cline">rooveterinaryinc.roo-cline</option>
+                        <option value="saoudrizwan.claude-dev">saoudrizwan.claude-dev</option>
+                        <option value="rooboost">rooboost</option>
+                    </select>
+                    
+                    <button id="moveSelectedBtn" style="margin-right: 10px; padding: 5px 10px;">Move</button>
+                    <button id="deleteSelectedBtn" style="padding: 5px 10px; color: #d33;">Delete</button>
+                </div>
+                
+                <div class="filter-controls" style="margin: 0;">
+                    <label for="projectFilter" style="margin-right: 8px;">Filter by project:</label>
+                    <select id="projectFilter" class="filter-select">
+                        <option value="all">All Projects</option>
+                    </select>
+                </div>
             </div>
             
-            <!-- Action bar for bulk operations -->
-            <div class="action-bar" style="margin-bottom: 15px; padding: 10px; background-color: var(--header-bg); border-radius: 4px;">
-                <input type="checkbox" id="selectAllCheckbox" style="margin-right: 10px;">
-                <label for="selectAllCheckbox" style="margin-right: 20px;">Select All</label>
-                
-                <select id="moveToSource" style="margin-right: 10px; padding: 5px;">
-                    <option value="">Move selected to...</option>
-                    <option value="rooveterinaryinc.roo-cline">rooveterinaryinc.roo-cline</option>
-                    <option value="saoudrizwan.claude-dev">saoudrizwan.claude-dev</option>
-                    <option value="rooboost">rooboost</option>
-                </select>
-                
-                <button id="moveSelectedBtn" style="margin-right: 10px; padding: 5px 10px;">Move</button>
-                <button id="deleteSelectedBtn" style="padding: 5px 10px; color: #d33;">Delete</button>
+            <!-- Scrollable content area -->
+            <div style="flex: 1; overflow-y: auto; position: relative;">
+                <div id="taskList" class="loading">Loading tasks...</div>
             </div>
-            
-            <div id="taskList" class="loading">Loading tasks...</div>
-            <div id="debugInfo" class="debug"></div>
+            <div id="debugInfo" class="debug" style="position: sticky; bottom: 0; background: white; padding: 10px; border-top: 1px solid var(--border-color);"></div>
         </div>
     </div>
     
@@ -465,17 +472,6 @@
                 return;
             }
 
-            // Initialize visibility
-            actionBar.style.display = 'none';
-            
-            // Add CSS class for better styling control
-            actionBar.classList.add('bulk-actions');
-
-            function updateActionBarVisibility() {
-                const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
-                actionBar.style.display = checkedBoxes.length > 0 ? 'block' : 'none';
-            }
-
             function getSelectedTaskPaths() {
                 const checkboxes = document.querySelectorAll('.task-checkbox:checked');
                 return Array.from(checkboxes).map(checkbox => checkbox.dataset.taskPath);
@@ -484,7 +480,6 @@
             // Task checkbox change handler
             document.addEventListener('change', (e) => {
                 if (e.target.classList.contains('task-checkbox')) {
-                    updateActionBarVisibility();
                     // Update header checkbox state
                     const allChecked = document.querySelectorAll('.task-checkbox').length ===
                                      document.querySelectorAll('.task-checkbox:checked').length;
@@ -499,18 +494,16 @@
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = e.target.checked;
                 });
-                updateActionBarVisibility();
                 selectAllCheckbox.checked = e.target.checked;
             });
 
-            // Select All checkbox handler
+            // Select All checkbox click handler
             selectAllCheckbox.addEventListener('change', (e) => {
                 const checkboxes = document.querySelectorAll('.task-checkbox');
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = e.target.checked;
                 });
                 headerCheckbox.checked = e.target.checked;
-                updateActionBarVisibility();
             });
 
             // Move selected button handler
@@ -519,21 +512,16 @@
                 const targetSource = moveToSource.value;
                 
                 if (selectedPaths.length === 0) {
-                    vscode.postMessage({
-                        command: 'showError',
-                        message: 'No tasks selected'
-                    });
+                    console.log('No tasks selected to move');
                     return;
                 }
-
+                
                 if (!targetSource) {
-                    vscode.postMessage({
-                        command: 'showError',
-                        message: 'Please select a destination source'
-                    });
+                    console.log('No target source selected');
                     return;
                 }
-
+                
+                console.log('Moving tasks to source:', targetSource);
                 vscode.postMessage({
                     command: 'moveTasks',
                     taskPaths: selectedPaths,
@@ -546,32 +534,21 @@
                 const selectedPaths = getSelectedTaskPaths();
                 
                 if (selectedPaths.length === 0) {
-                    vscode.postMessage({
-                        command: 'showError',
-                        message: 'No tasks selected'
-                    });
+                    console.log('No tasks selected to delete');
                     return;
                 }
-
-                if (confirm(`Are you sure you want to delete ${selectedPaths.length} selected task(s)?`)) {
-                    vscode.postMessage({
-                        command: 'deleteTasks',
-                        taskPaths: selectedPaths
-                    });
-                }
+                
+                console.log('Deleting selected tasks');
+                vscode.postMessage({
+                    command: 'deleteTasks',
+                    taskPaths: selectedPaths
+                });
             });
-
-            // Initial setup
-            actionBar.style.display = 'none';
         }
 
-        // Call setup after initial render
-        window.addEventListener('load', () => {
-            setupBulkSelection();
-        });
-
-        console.log('Script setup complete');
+        // Initial load
         loadTasks();
+        setupBulkSelection();
     </script>
 </body>
 </html>
