@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RooBoost Task Browser</title>
+    <link href="https://unpkg.com/@vscode/codicons/dist/codicon.css" rel="stylesheet" />
     <style>
         :root {
             --primary-color: #0078d4;
@@ -241,8 +242,12 @@
                         <option value="rooboost">rooboost</option>
                     </select>
                     
-                    <button id="moveSelectedBtn" style="margin-right: 10px; padding: 5px 10px;">Move</button>
-                    <button id="deleteSelectedBtn" style="padding: 5px 10px; color: #d33;">Delete</button>
+                    <button id="moveSelectedBtn" style="margin-right: 10px; padding: 5px 10px;" title="Move">
+                        <span class="codicon codicon-arrow-swap"></span>
+                    </button>
+                    <button id="deleteSelectedBtn" style="padding: 5px 10px; color: #d33;" title="Delete">
+                        <span class="codicon codicon-trash"></span>
+                    </button>
                 </div>
                 
                 <div class="filter-controls" style="margin: 0;">
