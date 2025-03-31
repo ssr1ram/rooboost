@@ -3,7 +3,12 @@ import { Plugin } from '../plugins/types';
 
 export class PluginManager {
     private plugins: Plugin[] = [];
+    private outputChannel: vscode.OutputChannel;
     
+    constructor() {
+        this.outputChannel = vscode.window.createOutputChannel('RooBoost');
+    }
+
     registerPlugin(plugin: Plugin) {
         this.plugins.push(plugin);
     }
@@ -22,9 +27,10 @@ export class PluginManager {
                     });
                 }
                 
-                plugin.activate(context);
+                plugin.outputChannel = this.outputChannel;
+                plugin.activate(context, this.outputChannel);
             } catch (err) {
-                console.error(`Failed to activate plugin ${plugin.name}:`, err);
+                this.outputChannel.appendLine(`Failed to activate plugin ${plugin.name}: ${err}`);
             }
         });
     }

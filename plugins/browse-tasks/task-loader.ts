@@ -11,9 +11,8 @@ interface Task {
     timestamp: number;
 }
 
-export async function loadTasks(panel: vscode.WebviewPanel) {
+export async function loadTasks(panel: vscode.WebviewPanel, outputChannel: vscode.OutputChannel) {
     const tasksDir = getTasksDirectory();
-    const outputChannel = vscode.window.createOutputChannel('RooBoost Tasks');
     
     try {
         if (!fs.existsSync(tasksDir)) {
@@ -67,13 +66,15 @@ export async function loadTasks(panel: vscode.WebviewPanel) {
                 }
                 outputChannel.appendLine(`Project: ${projectName}, Message: ${messageText}`);
                 const stats = fs.statSync(taskPath);
-                return {
+                const taskObj = {
                     name: dirent.name.substring(0, 8), // Shorten task ID
                     path: taskPath,
                     message: messageText,
                     projectName: projectName,
                     timestamp: stats.mtimeMs
                 };
+                outputChannel.appendLine(`Created task object: ${JSON.stringify(taskObj)}`);
+                return taskObj;
             })
             .sort((a, b) => b.timestamp - a.timestamp); // Reverse chronological sort
 

@@ -10,7 +10,7 @@ interface Task {
     message: string;
 }
 
-export function createTaskBrowserPanel(context: vscode.ExtensionContext): vscode.WebviewPanel {
+export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): vscode.WebviewPanel {
     const panel = vscode.window.createWebviewPanel(
         'rooboostTaskBrowser',
         'RooBoost Task Browser',
@@ -38,10 +38,25 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext): vscode
     });
     
     panel.webview.onDidReceiveMessage(
-        async (message: { command: string }) => {
+        async (message: { command: string; taskPath?: string }) => {
             switch (message.command) {
                 case 'loadTasks':
-                    await loadTasks(panel);
+                    outputChannel.appendLine('Received loadTasks command');
+                    await loadTasks(panel, outputChannel);
+                    break;
+                case 'viewTask':
+                    outputChannel.appendLine(`Received viewTask command for path: ${message.taskPath}`);
+                    if (message.taskPath) {
+                        try {
+                            await vscode.commands.executeCommand('rooboost.viewTask', message.taskPath);
+                            outputChannel.appendLine('Successfully executed viewTask command');
+                        } catch (err) {
+                            const error = err as Error;
+                            outputChannel.appendLine(`Failed to execute viewTask: ${error.message}`);
+                        }
+                    } else {
+                        outputChannel.appendLine('Error: No taskPath provided in viewTask command');
+                    }
                     break;
             }
         },

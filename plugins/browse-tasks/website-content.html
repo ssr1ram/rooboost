@@ -157,15 +157,32 @@
             vscode.postMessage({ command: 'loadTasks' });
         }
         
-        function createViewLink(taskId) {
-            return '<a class="action-link" onclick="viewTaskDetails(\'' + taskId + '\')">View</a>';
+        function createViewLink(taskPath) {
+            if (!taskPath) {
+                console.error('Cannot create view link - taskPath is undefined');
+                return '';
+            }
+            console.log("Creating view link for path:", taskPath);
+            const escapedPath = taskPath.replace(/'/g, "\\'");
+            return `<a class="action-link" onclick="viewTaskDetails('${escapedPath}')">View</a>`;
         }
         
-        function viewTaskDetails(taskId) {
-            vscode.postMessage({ 
-                command: 'viewTask', 
-                taskId: taskId 
-            });
+        function viewTaskDetails(taskPath) {
+            if (!taskPath) {
+                console.error('Cannot view task - path is undefined');
+                return;
+            }
+            console.log('Preparing to view task at path:', taskPath);
+            const message = {
+                command: 'viewTask',
+                taskPath: taskPath
+            };
+            console.log('Posting message to VS Code:', JSON.stringify(message));
+            try {
+                vscode.postMessage(message);
+            } catch (err) {
+                console.error('Failed to post message:', err);
+            }
         }
         
         console.log('Setting up message listener...');
@@ -215,7 +232,7 @@
                                             <span class="small">${new Date(task.timestamp).toLocaleDateString("en-US", options)}</span>
                                             </td>
                                         <td>${task.message || '-'}</td>
-                                        <td>${createViewLink(task.id)}</td>
+                                        <td>${createViewLink(task.path)}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>

@@ -4,7 +4,8 @@ export interface Plugin {
     name: string;
     version: string;
     commands: Command[];
-    activate(context: vscode.ExtensionContext): void;
+    outputChannel?: vscode.OutputChannel;
+    activate(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): void;
     deactivate(): void;
 }
 
