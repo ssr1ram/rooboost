@@ -31,7 +31,7 @@
         
         <div class="main-content">
             <!-- Action bar with bulk operations and filter controls -->
-            <div class="action-bar bulk-actions" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background-color: var(--header-bg); border-radius: 4px;">
+            <div class="action-bar bulk-actions">
                 <div>
                     <input type="checkbox" id="selectAllCheckbox" style="margin-right: 10px;">
                     <label for="selectAllCheckbox" style="margin-right: 20px;">Select All</label>
@@ -51,7 +51,7 @@
                     </button>
                 </div>
                 
-                <div class="filter-controls" style="margin: 0;">
+                <div class="filter-controls" style="margin: 15px 0 0 0; align-self: flex-end;">
                     <label for="projectFilter" style="margin-right: 8px;">Filter by project:</label>
                     <select id="projectFilter" class="filter-select">
                         <option value="all">All Projects</option>
@@ -60,8 +60,8 @@
             </div>
             
             <!-- Scrollable content area -->
-            <div style="flex: 1; overflow-y: auto; position: relative;">
-                <div id="taskList" class="loading">Loading tasks...</div>
+            <div style="height: 60vh; overflow-y: auto; position: relative;">
+                <div id="taskList" class="loading" style="min-height: 100%;">Loading tasks...</div>
             </div>
             <div id="debugInfo" class="debug" style="position: sticky; bottom: 0; background: white; padding: 10px; border-top: 1px solid var(--border-color);"></div>
         </div>

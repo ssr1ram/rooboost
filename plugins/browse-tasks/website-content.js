@@ -178,6 +178,34 @@ window.addEventListener('message', event => {
     }
 });
 
+// Set up action select change handler
+document.getElementById('actionSelect').addEventListener('change', (event) => {
+    const selectedAction = event.target.value;
+    if (selectedAction === 'browseTasks') {
+        loadTasks();
+    }
+});
+
+// Source selection handler
+document.querySelectorAll('.source-item').forEach(item => {
+    item.addEventListener('click', () => {
+        // Update selected state
+        document.querySelectorAll('.source-item').forEach(i =>
+            i.classList.remove('selected'));
+        item.classList.add('selected');
+        
+        // Get the source from data attribute
+        const source = item.dataset.source;
+        console.log('Source selected:', source);
+        
+        // Send message to extension
+        vscode.postMessage({
+            command: 'selectSource',
+            source: source
+        });
+    });
+});
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initializePlugins();

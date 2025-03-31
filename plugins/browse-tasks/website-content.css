@@ -11,8 +11,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
 }
 
 /* Topbar styles */
@@ -60,7 +59,7 @@ body {
 .content-area {
     display: flex;
     flex: 1;
-    overflow: hidden;
+    min-height: 0; /* Allows flex children to shrink below content size */
 }
 
 /* Sidebar */
@@ -80,41 +79,42 @@ body {
     height: 100%;
 }
 
-/* Table styles */
-.task-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+        /* Table styles */
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .task-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background-color: var(--header-bg);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .task-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-.task-table th {
-    text-align: left;
-    padding: 12px 15px;
-    background-color: var(--header-bg);
-    border-bottom: 2px solid var(--border-color);
-}
+        td .small {
+            font-size: .8em;
+        }
+        
+        .task-table tr:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .action-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .action-link:hover {
+            text-decoration: underline;
+        }
 
-.task-table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-td .small {
-    font-size: .8em;
-}
-
-.task-table tr:hover {
-    background-color: var(--hover-bg);
-}
-
-.action-link {
-    color: var(--primary-color);
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.action-link:hover {
-    text-decoration: underline;
-}
 
 /* Debug info */
 .debug {
@@ -168,7 +168,8 @@ td .small {
 /* Bulk actions styling */
 .bulk-actions {
     display: flex;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
     gap: 10px;
     margin-bottom: 15px;
     padding: 10px;
