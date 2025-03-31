@@ -35,17 +35,15 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputC
 
     panel.webview.onDidReceiveMessage(
         async (message: WebviewMessage) => {
+            outputChannel.appendLine(`Received ${message.command}`);
             switch (message.command) {
                 case 'loadTasks':
-                    outputChannel.appendLine('Received loadTasks command');
                     await loadTasks(panel, outputChannel, 'rooveterinaryinc.roo-cline');
                     break;
                 case 'selectSource':
-                    outputChannel.appendLine(`Received selectSource command for: ${message.source}`);
                     await loadTasks(panel, outputChannel, message.source);
                     break;
                 case 'viewTask':
-                    outputChannel.appendLine(`Received viewTask command for path: ${message.taskPath}`);
                     if (message.taskPath) {
                         try {
                             await vscode.commands.executeCommand('rooboost.viewTask', message.taskPath);
@@ -55,7 +53,6 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputC
                     }
                     break;
                 case 'pluginChanged':
-                    outputChannel.appendLine(`Plugin changed to: ${message.plugin}`);
                     // Handle plugin switching logic here
                     break;
             }
