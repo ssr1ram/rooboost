@@ -11,8 +11,8 @@ interface Task {
     timestamp: number;
 }
 
-export async function loadTasks(panel: vscode.WebviewPanel, outputChannel: vscode.OutputChannel) {
-    const tasksDir = getTasksDirectory();
+export async function loadTasks(panel: vscode.WebviewPanel, outputChannel: vscode.OutputChannel, source: string = 'rooveterinaryinc.roo-cline') {
+    const tasksDir = getTasksDirectory(source);
     
     try {
         if (!fs.existsSync(tasksDir)) {

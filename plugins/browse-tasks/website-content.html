@@ -123,6 +123,40 @@
             color: #666;
             font-style: italic;
         }
+
+        /* Sources section */
+        .sources-section {
+            margin-bottom: 20px;
+        }
+
+        .sources-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .source-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .source-item {
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .source-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .source-item.selected {
+            background-color: var(--primary-color);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -137,7 +171,14 @@
     
     <div class="content-area">
         <div class="sidebar">
-            <!-- Sidebar content will go here -->
+            <div class="sources-section">
+                <h3>Sources</h3>
+                <ul class="source-list">
+                    <li class="source-item selected" data-source="rooveterinaryinc.roo-cline">rooveterinaryinc.roo-cline</li>
+                    <li class="source-item" data-source="saoudrizwan.claude-dev">saoudrizwan.claude-dev</li>
+                    <li class="source-item" data-source="rooboost">rooboost</li>
+                </ul>
+            </div>
         </div>
         
         <div class="main-content">
@@ -262,6 +303,26 @@
             }
         });
         
+        // Source selection handler
+        document.querySelectorAll('.source-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // Update selected state
+                document.querySelectorAll('.source-item').forEach(i =>
+                    i.classList.remove('selected'));
+                item.classList.add('selected');
+                
+                // Get the source from data attribute
+                const source = item.dataset.source;
+                console.log('Source selected:', source);
+                
+                // Send message to extension
+                vscode.postMessage({
+                    command: 'selectSource',
+                    source: source
+                });
+            });
+        });
+
         console.log('Script setup complete');
         loadTasks();
     </script>

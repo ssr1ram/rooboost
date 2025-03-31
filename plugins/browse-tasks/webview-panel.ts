@@ -37,12 +37,22 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputC
         ]
     });
     
+    interface WebviewMessage {
+        command: string;
+        taskPath?: string;
+        source?: string;
+    }
+
     panel.webview.onDidReceiveMessage(
-        async (message: { command: string; taskPath?: string }) => {
+        async (message: WebviewMessage) => {
             switch (message.command) {
                 case 'loadTasks':
                     outputChannel.appendLine('Received loadTasks command');
-                    await loadTasks(panel, outputChannel);
+                    await loadTasks(panel, outputChannel, 'rooveterinaryinc.roo-cline');
+                    break;
+                case 'selectSource':
+                    outputChannel.appendLine(`Received selectSource command for: ${message.source}`);
+                    await loadTasks(panel, outputChannel, message.source);
                     break;
                 case 'viewTask':
                     outputChannel.appendLine(`Received viewTask command for path: ${message.taskPath}`);
@@ -67,13 +77,17 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputC
     return panel;
 }
 
-export function getTasksDirectory(): string {
+export function getTasksDirectory(source: string = 'rooveterinaryinc.roo-cline'): string {
     const platform = os.platform();
-    if (platform === 'darwin') {
-        return path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User', 'globalStorage', 'rooveterinaryinc.roo-cline', 'tasks');
-    } else if (platform === 'win32') {
-        return path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User', 'globalStorage', 'rooveterinaryinc.roo-cline', 'tasks');
-    } else {
-        return path.join(os.homedir(), '.config', 'Code', 'User', 'globalStorage', 'rooveterinaryinc.roo-cline', 'tasks');
-    }
+    const baseDirs = {
+        darwin: path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User', 'globalStorage'),
+        win32: path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User', 'globalStorage'),
+        linux: path.join(os.homedir(), '.config', 'Code', 'User', 'globalStorage')
+    };
+    
+    const baseDir = platform === 'win32' ? baseDirs.win32 :
+                    platform === 'darwin' ? baseDirs.darwin :
+                    baseDirs.linux;
+    
+    return path.join(baseDir, source, 'tasks');
 }
