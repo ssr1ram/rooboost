@@ -3,20 +3,22 @@ import * as fs from 'fs';
 
 export function getWebviewContent(): string {
     const thisFileDir = __dirname;
-    const topbarPath = path.join(thisFileDir, 'common-topbar.html');
+    const topbarPath = path.join(thisFileDir, '../common-topbar.html');
+    const cssCommonPath = path.join(thisFileDir, '../common.css');
     const contentPath = path.join(thisFileDir, 'browse-tasks-content.html');
-    const cssPath = path.join(thisFileDir, 'website-content.css');
+    const cssPagePath = path.join(thisFileDir, 'website-content.css');
     const jsPath = path.join(thisFileDir, 'website-content.js');
 
     try {
         const topbarHtml = fs.readFileSync(topbarPath, 'utf-8');
         const contentHtml = fs.readFileSync(contentPath, 'utf-8');
-        const css = fs.readFileSync(cssPath, 'utf-8');
+        const cssCommon = fs.readFileSync(cssCommonPath, 'utf-8');
+        const cssPage = fs.readFileSync(cssPagePath, 'utf-8');
         const js = fs.readFileSync(jsPath, 'utf-8');
 
         // Extract body content from both files
-        const topbarBody = extractBodyContent(topbarHtml);
-        const contentBody = extractBodyContent(contentHtml);
+        // const topbarBody = extractBodyContent(topbarHtml);
+        // const contentBody = extractBodyContent(contentHtml);
 
         // Combine the content
         return `<!DOCTYPE html>
@@ -26,11 +28,14 @@ export function getWebviewContent(): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RooBoost</title>
     <link href="https://unpkg.com/@vscode/codicons/dist/codicon.css" rel="stylesheet" />
-    <style>${css}</style>
+    <style>
+        ${cssCommon}
+        ${cssPage}
+    </style>
 </head>
 <body>
-    ${topbarBody}
-    ${contentBody}
+    ${topbarHtml}
+    ${contentHtml}
     <script>${js}</script>
 </body>
 </html>`;
