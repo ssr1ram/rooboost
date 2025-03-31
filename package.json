@@ -30,7 +30,7 @@
     "compile": "tsc -p ./ && npm run copy:html",
     "watch": "tsc -watch -p ./ & npm run copy:html",
     "package": "vsce package",
-    "copy:html": "cpx \"plugins/**/*.html\" out/plugins"
+    "copy:html": "cpx \"plugins/**/*.{html,css,js}\" out/plugins"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
