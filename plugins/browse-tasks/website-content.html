@@ -38,10 +38,22 @@
             color: var(--primary-color);
         }
         
-        .action-select {
+        .action-select, .filter-select {
             padding: 6px 12px;
             border-radius: 4px;
             border: 1px solid var(--border-color);
+        }
+
+        .filter-controls {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-controls label {
+            font-weight: 500;
+            color: #333;
         }
         
         /* Page heading */
@@ -182,6 +194,12 @@
         </div>
         
         <div class="main-content">
+            <div class="filter-controls">
+                <label for="projectFilter">Filter by project:</label>
+                <select id="projectFilter" class="filter-select">
+                    <option value="all">All Projects</option>
+                </select>
+            </div>
             <div id="taskList" class="loading">Loading tasks...</div>
             <div id="debugInfo" class="debug"></div>
         </div>
@@ -227,6 +245,66 @@
         }
         
         console.log('Setting up message listener...');
+        let allTasks = [];
+        const projectFilter = document.getElementById('projectFilter');
+
+        function updateProjectFilterOptions(tasks) {
+            const projects = new Set();
+            tasks.forEach(task => projects.add(task.projectName || 'Unknown project'));
+            
+            // Clear existing options except "All Projects"
+            while (projectFilter.options.length > 1) {
+                projectFilter.remove(1);
+            }
+
+            // Add new options
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project;
+                option.textContent = project;
+                projectFilter.appendChild(option);
+            });
+        }
+
+        function filterTasks(tasks, project) {
+            if (project === 'all') return tasks;
+            return tasks.filter(task => task.projectName === project);
+        }
+
+        function renderTasks(tasks) {
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            
+            return `
+                <table class="task-table">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Task</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tasks.map(task => `
+                            <tr>
+                                <td>${task.projectName || '-'}
+                                    <br>
+                                    <span class="small">${new Date(task.timestamp).toLocaleDateString("en-US", options)}</span>
+                                    </td>
+                                <td>${task.message || '-'}</td>
+                                <td>${createViewLink(task.path)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
         window.addEventListener('message', event => {
             console.log('Message received at ' + new Date().toISOString() + ':', event.data);
             const taskList = document.getElementById('taskList');
@@ -248,39 +326,11 @@
                 console.log('Processing showTasks command with ' + (message.tasks ? message.tasks.length : 0) + ' tasks');
                 
                 if (Array.isArray(message.tasks) && message.tasks.length > 0) {
-                    const options = { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric',
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    };
+                    allTasks = message.tasks;
+                    updateProjectFilterOptions(allTasks);
                     
-                    const tableHtml = `
-                        <table class="task-table">
-                            <thead>
-                                <tr>
-                                    <th>Project</th>
-                                    <th>Task</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${message.tasks.map(task => `
-                                    <tr>
-                                        <td>${task.projectName || '-'}
-                                            <br>
-                                            <span class="small">${new Date(task.timestamp).toLocaleDateString("en-US", options)}</span>
-                                            </td>
-                                        <td>${task.message || '-'}</td>
-                                        <td>${createViewLink(task.path)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    `;
-                    
-                    taskList.innerHTML = tableHtml;
+                    const filteredTasks = filterTasks(allTasks, projectFilter.value);
+                    taskList.innerHTML = renderTasks(filteredTasks);
                     console.log('Tasks rendered to UI');
                 } else {
                     taskList.innerHTML = '<p>No tasks found</p>';
@@ -321,6 +371,12 @@
                     source: source
                 });
             });
+        });
+
+        // Project filter change handler
+        projectFilter.addEventListener('change', () => {
+            const filteredTasks = filterTasks(allTasks, projectFilter.value);
+            document.getElementById('taskList').innerHTML = renderTasks(filteredTasks);
         });
 
         console.log('Script setup complete');
