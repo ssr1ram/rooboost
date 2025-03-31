@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://unpkg.com/@vscode/codicons/dist/codicon.css" rel="stylesheet" />
+    <style>
+        .topbar {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: var(--vscode-editor-background);
+            border-bottom: 1px solid var(--vscode-editorWidget-border);
+        }
+        .logo {
+            font-weight: bold;
+            margin-right: 20px;
+            color: var(--vscode-editor-foreground);
+        }
+        .action-select {
+            padding: 5px 10px;
+            background-color: var(--vscode-dropdown-background);
+            color: var(--vscode-dropdown-foreground);
+            border: 1px solid var(--vscode-dropdown-border);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo">RooBoost</div>
+        <select class="action-select" id="actionSelect">
+            <option value="browseTasks" selected>Browse Tasks</option>
+        </select>
+    </div>
+</body>
+</html>

@@ -3,24 +3,48 @@ import * as fs from 'fs';
 
 export function getWebviewContent(): string {
     const thisFileDir = __dirname;
-    const htmlPath = path.join(thisFileDir, 'website-content.html');
+    const topbarPath = path.join(thisFileDir, 'common-topbar.html');
+    const contentPath = path.join(thisFileDir, 'browse-tasks-content.html');
     const cssPath = path.join(thisFileDir, 'website-content.css');
     const jsPath = path.join(thisFileDir, 'website-content.js');
 
     try {
-        let html = fs.readFileSync(htmlPath, 'utf-8');
+        const topbarHtml = fs.readFileSync(topbarPath, 'utf-8');
+        const contentHtml = fs.readFileSync(contentPath, 'utf-8');
         const css = fs.readFileSync(cssPath, 'utf-8');
         const js = fs.readFileSync(jsPath, 'utf-8');
 
-        // Replace external references with inlined content
-        html = html.replace('<!-- CSS_PLACEHOLDER -->', `<style>${css}</style>`);
-        html = html.replace('<!-- JS_PLACEHOLDER -->', `<script>${js}</script>`);
-        
-        return html;
+        // Extract body content from both files
+        const topbarBody = extractBodyContent(topbarHtml);
+        const contentBody = extractBodyContent(contentHtml);
+
+        // Combine the content
+        return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RooBoost</title>
+    <link href="https://unpkg.com/@vscode/codicons/dist/codicon.css" rel="stylesheet" />
+    <style>${css}</style>
+</head>
+<body>
+    ${topbarBody}
+    ${contentBody}
+    <script>${js}</script>
+</body>
+</html>`;
     } catch (error) {
         console.error('Failed to load webview content:', error);
         return getFallbackHtmlContent();
     }
+}
+
+function extractBodyContent(html: string): string {
+    const bodyStart = html.indexOf('<body>');
+    const bodyEnd = html.indexOf('</body>');
+    if (bodyStart === -1 || bodyEnd === -1) return '';
+    return html.substring(bodyStart + 6, bodyEnd).trim();
 }
 
 function getFallbackHtmlContent(): string {

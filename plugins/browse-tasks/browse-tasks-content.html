@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RooBoost Browse Tasks</title>
+    <!-- CSS_PLACEHOLDER -->
+</head>
+<body>
+    <div class="page-heading">Browse Tasks</div>
+    
+    <div class="content-area">
+        <div class="sidebar">
+            <div class="sources-section">
+                <h3>Sources</h3>
+                <ul class="source-list">
+                    <li class="source-item selected" data-source="rooveterinaryinc.roo-cline">rooveterinaryinc.roo-cline</li>
+                    <li class="source-item" data-source="saoudrizwan.claude-dev">saoudrizwan.claude-dev</li>
+                    <li class="source-item" data-source="rooboost">rooboost</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="action-bar bulk-actions">
+                <div>
+                    <input type="checkbox" id="selectAllCheckbox">
+                    <label for="selectAllCheckbox">Select All</label>
+                    
+                    <select id="moveToSource">
+                        <option value="">Move selected to...</option>
+                        <option value="rooveterinaryinc.roo-cline">rooveterinaryinc.roo-cline</option>
+                        <option value="saoudrizwan.claude-dev">saoudrizwan.claude-dev</option>
+                        <option value="rooboost">rooboost</option>
+                    </select>
+                    
+                    <button id="moveSelectedBtn" title="Move">
+                        <span class="codicon codicon-arrow-swap"></span>
+                    </button>
+                    <button id="deleteSelectedBtn" title="Delete">
+                        <span class="codicon codicon-trash"></span>
+                    </button>
+                </div>
+                
+                <div class="filter-controls">
+                    <label for="projectFilter">Filter by project:</label>
+                    <select id="projectFilter" class="filter-select">
+                        <option value="all">All Projects</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="scrollable-content">
+                <div id="taskList" class="loading">Loading tasks...</div>
+            </div>
+            <div id="debugInfo" class="debug"></div>
+        </div>
+    </div>
+    <!-- JS_PLACEHOLDER -->
+</body>
+</html>

@@ -11,7 +11,6 @@ interface Task {
 }
 
 export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): vscode.WebviewPanel {
-    // Create new panel
     const panel = vscode.window.createWebviewPanel(
         'rooboostTaskBrowser',
         'RooBoost Task Browser',
@@ -25,23 +24,13 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputC
         }
     );
 
-    const webviewContent = getWebviewContent();
-    console.log('Webview content length:', webviewContent.length);
-    panel.webview.html = webviewContent;
-    
-    // Log webview configuration
-    console.log('Webview options:', {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [
-            vscode.Uri.file(path.join(context.extensionPath, 'plugins', 'browse-tasks'))
-        ]
-    });
-    
+    panel.webview.html = getWebviewContent();
+
     interface WebviewMessage {
         command: string;
         taskPath?: string;
         source?: string;
+        plugin?: string;
     }
 
     panel.webview.onDidReceiveMessage(
@@ -60,14 +49,14 @@ export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputC
                     if (message.taskPath) {
                         try {
                             await vscode.commands.executeCommand('rooboost.viewTask', message.taskPath);
-                            outputChannel.appendLine('Successfully executed viewTask command');
                         } catch (err) {
-                            const error = err as Error;
-                            outputChannel.appendLine(`Failed to execute viewTask: ${error.message}`);
+                            outputChannel.appendLine(`Failed to execute viewTask: ${err}`);
                         }
-                    } else {
-                        outputChannel.appendLine('Error: No taskPath provided in viewTask command');
                     }
+                    break;
+                case 'pluginChanged':
+                    outputChannel.appendLine(`Plugin changed to: ${message.plugin}`);
+                    // Handle plugin switching logic here
                     break;
             }
         },
