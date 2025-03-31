@@ -11,6 +11,7 @@ interface Task {
 }
 
 export function createTaskBrowserPanel(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): vscode.WebviewPanel {
+    // Create new panel
     const panel = vscode.window.createWebviewPanel(
         'rooboostTaskBrowser',
         'RooBoost Task Browser',

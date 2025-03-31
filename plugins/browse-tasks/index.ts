@@ -23,10 +23,24 @@ export class BrowseTasksPlugin implements Plugin {
     private panel?: vscode.WebviewPanel;
 
     activate(context: vscode.ExtensionContext) {
-        if (!this.panel) {
-            this.panel = createTaskBrowserPanel(context, this.outputChannel!);
+        if (this.panel) {
+            // If panel exists but is disposed, clear the reference
+            if (this.panel.webview.html === '') {
+                this.panel = undefined;
+            } else {
+                // If panel exists and is valid, reveal it
+                this.panel.reveal(vscode.ViewColumn.One);
+                return;
+            }
         }
-        this.panel.reveal(vscode.ViewColumn.One);
+        
+        // Create new panel
+        this.panel = createTaskBrowserPanel(context, this.outputChannel!);
+        
+        // Handle panel disposal
+        this.panel.onDidDispose(() => {
+            this.panel = undefined;
+        }, null, context.subscriptions);
     }
 
     private async viewTask(context: vscode.ExtensionContext, ...args: any[]) {
