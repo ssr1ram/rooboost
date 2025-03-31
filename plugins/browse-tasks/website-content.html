@@ -337,6 +337,10 @@
         }
 
         function renderTasks(tasks) {
+            if (!tasks || tasks.length === 0) {
+                return '<p>No tasks found</p>';
+            }
+
             const options = {
                 year: 'numeric',
                 month: 'short',
@@ -397,8 +401,13 @@
                     updateProjectFilterOptions(allTasks);
                     
                     const filteredTasks = filterTasks(allTasks, projectFilter.value);
-                    taskList.innerHTML = renderTasks(filteredTasks);
+                    const tasksHtml = renderTasks(filteredTasks);
+                    taskList.innerHTML = tasksHtml;
                     console.log('Tasks rendered to UI');
+                    // Setup bulk selection after allowing DOM to update
+                    setTimeout(() => {
+                        setupBulkSelection();
+                    }, 0);
                 } else {
                     taskList.innerHTML = '<p>No tasks found</p>';
                     console.log('No tasks to render');
@@ -449,6 +458,14 @@
         // Bulk selection functionality
         function setupBulkSelection() {
             console.log('Setting up bulk selection...');
+            
+            // First verify the table exists and is accessible
+            const taskTable = document.querySelector('.task-table');
+            if (!taskTable) {
+                console.debug('Task table not yet accessible - skipping bulk selection setup');
+                return;
+            }
+
             const actionBar = document.querySelector('.action-bar');
             const headerCheckbox = document.getElementById('headerCheckbox');
             const selectAllCheckbox = document.getElementById('selectAllCheckbox');
@@ -456,26 +473,12 @@
             const moveSelectedBtn = document.getElementById('moveSelectedBtn');
             const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
 
-            console.log('Action bar:', actionBar);
-            console.log('Header checkbox:', headerCheckbox);
-            console.log('Select All checkbox:', selectAllCheckbox);
-            console.log('Move select:', moveToSource);
-            console.log('Move button:', moveSelectedBtn);
-            console.log('Delete button:', deleteSelectedBtn);
-
-            if (!actionBar) console.error('Action bar not found!');
-            if (!headerCheckbox) console.error('Header checkbox not found!');
-            if (!selectAllCheckbox) console.error('Select All checkbox not found!');
-            if (!moveToSource) console.error('Move select not found!');
-            if (!moveSelectedBtn) console.error('Move button not found!');
-            if (!deleteSelectedBtn) console.error('Delete button not found!');
-
             if (!actionBar || !headerCheckbox || !selectAllCheckbox || !moveToSource || !moveSelectedBtn || !deleteSelectedBtn) {
-                console.error('Bulk selection elements not found - will retry');
-                // Retry after brief delay
-                setTimeout(setupBulkSelection, 100);
+                console.debug('Some bulk selection elements not found - skipping setup');
                 return;
             }
+
+            console.log('All bulk selection elements found and accessible, proceeding with setup');
 
             function getSelectedTaskPaths() {
                 const checkboxes = document.querySelectorAll('.task-checkbox:checked');
