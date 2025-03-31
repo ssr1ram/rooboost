@@ -257,8 +257,12 @@
                 projectFilter.remove(1);
             }
 
+            // Convert Set to array and sort alphabetically (case-insensitive)
+            const sortedProjects = Array.from(projects).sort((a, b) =>
+                a.localeCompare(b, undefined, {sensitivity: 'base'}));
+
             // Add new options
-            projects.forEach(project => {
+            sortedProjects.forEach(project => {
                 const option = document.createElement('option');
                 option.value = project;
                 option.textContent = project;
