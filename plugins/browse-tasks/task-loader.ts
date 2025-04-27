@@ -45,7 +45,10 @@ export async function loadTasks(panel: vscode.WebviewPanel, outputChannel: vscod
                         outputChannel.appendLine(`Found history file for ${dirent.name}`);
                         const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
                         if (history[0]?.content?.[1]?.text) {
-                            const pathMatch = history[0].content[1].text.match(/Current Working Directory \((.*)\)/);
+                            let pathMatch = history[0].content[1].text.match(/Current Working Directory \((.*)\)/);
+                            if (pathMatch && pathMatch[1]) { } else {
+                                pathMatch = history[0].content[1].text.match(/Current Workspace Directory \((.*)\)/);
+                            }
                             if (pathMatch && pathMatch[1]) {
                                 const pathParts = pathMatch[1].split('/');
                                 projectName = pathParts[pathParts.length - 1];
